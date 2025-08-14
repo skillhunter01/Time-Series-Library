@@ -168,6 +168,8 @@ if __name__ == '__main__':
         Exp = Exp_Imputation
     elif args.task_name == 'anomaly_detection':
         Exp = Exp_Anomaly_Detection
+    elif args.task_name == 'anomaly_detection_custom':
+        Exp = Exp_Anomaly_Detection
     elif args.task_name == 'classification':
         Exp = Exp_Classification
     else:

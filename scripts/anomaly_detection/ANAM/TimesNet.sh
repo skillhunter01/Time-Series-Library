@@ -1,12 +1,13 @@
 python -u run.py \
   --task_name anomaly_detection_custom \
   --is_training 1 \
-  --root_path ./dataset/DSI \
-  --data_path train.csv \
-  --model_id DSI \
+  --root_path ./dataset/ANAM \
+  --data_path Normal_uni.csv \
+  --model_id ANAM \
   --model TimesNet \
   --data custom \
-  --features M \
+  --features S \
+  --target Cumul_precipitation \
   --seq_len 100 \
   --pred_len 0 \
   --d_model 64 \

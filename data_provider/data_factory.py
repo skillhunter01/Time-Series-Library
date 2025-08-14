@@ -44,6 +44,25 @@ def data_provider(args, flag):
             num_workers=args.num_workers,
             drop_last=drop_last)
         return data_set, data_loader
+    elif args.task_name == 'anomaly_detection_custom':
+        drop_last = False
+        data_set = Data(
+            args = args,
+            root_path=args.root_path,
+            data_path=args.data_path,
+            features=args.features,
+            target=args.target,
+            size = (args.seq_len, args.label_len, args.pred_len),
+            flag=flag
+        )
+        print(flag, len(data_set))
+        data_loader = DataLoader(
+            data_set,
+            batch_size=batch_size,
+            shuffle=shuffle_flag,
+            num_workers=args.num_workers,
+            drop_last=drop_last)
+        return data_set, data_loader
     elif args.task_name == 'classification':
         drop_last = False
         data_set = Data(
