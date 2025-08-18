@@ -91,7 +91,7 @@ class Model(nn.Module):
                 self.seq_len, self.pred_len + self.seq_len)
             self.projection = nn.Linear(
                 configs.d_model, configs.c_out, bias=True)
-        if self.task_name == 'imputation' or self.task_name == 'anomaly_detection':
+        if self.task_name == 'imputation' or self.task_name == 'anomaly_detection' or self.task_name == 'anomaly_detection_custom':
             self.projection = nn.Linear(
                 configs.d_model, configs.c_out, bias=True)
         if self.task_name == 'classification':
@@ -180,6 +180,32 @@ class Model(nn.Module):
                       1, self.pred_len + self.seq_len, 1)))
         return dec_out
 
+    def anomaly_detction_custom(self, x_enc, x_mark_enc):
+        # Normalization from Non-stationary Transformer
+        means = x_enc.mean(1, keepdim=True).detach()
+        x_enc = x_enc.sub(means)
+        stdev = torch.sqrt(
+            torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)
+        x_enc = x_enc.div(stdev)
+
+        # embedding
+        enc_out = self.enc_embedding(x_enc, x_mark_enc)  # [B,T,C]
+        # TimesNet
+        for i in range(self.layer):
+            enc_out = self.layer_norm(self.model[i](enc_out))
+        # project back
+        dec_out = self.projection(enc_out)
+
+        # De-Normalization from Non-stationary Transformer
+        dec_out = dec_out.mul(
+                  (stdev[:, 0, :].unsqueeze(1).repeat(
+                      1, self.pred_len + self.seq_len, 1)))
+        dec_out = dec_out.add(
+                  (means[:, 0, :].unsqueeze(1).repeat(
+                      1, self.pred_len + self.seq_len, 1)))
+        return dec_out
+
+
     def classification(self, x_enc, x_mark_enc):
         # embedding
         enc_out = self.enc_embedding(x_enc, None)  # [B,T,C]
@@ -206,9 +232,11 @@ class Model(nn.Module):
             dec_out = self.imputation(
                 x_enc, x_mark_enc, x_dec, x_mark_dec, mask)
             return dec_out  # [B, L, D]
-        if self.task_name == 'anomaly_detection':
+        if self.task_name == 'anomaly_detection' or self.task_name == 'anomaly_detection_custom':
             dec_out = self.anomaly_detection(x_enc)
             return dec_out  # [B, L, D]
+        # if self.task_name == 'anomaly_detection_custom' :
+        #     dec_out = self.anomaly_detction_custom(x_enc, x_mark_enc)
         if self.task_name == 'classification':
             dec_out = self.classification(x_enc, x_mark_enc)
             return dec_out  # [B, N]
