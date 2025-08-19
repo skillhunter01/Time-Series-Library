@@ -180,7 +180,7 @@ class Model(nn.Module):
                       1, self.pred_len + self.seq_len, 1)))
         return dec_out
 
-    def anomaly_detction_custom(self, x_enc, x_mark_enc):
+    def anomaly_detection_custom(self, x_enc, x_mark_enc):
         # Normalization from Non-stationary Transformer
         means = x_enc.mean(1, keepdim=True).detach()
         x_enc = x_enc.sub(means)
@@ -236,7 +236,7 @@ class Model(nn.Module):
             dec_out = self.anomaly_detection(x_enc)
             return dec_out  # [B, L, D]
         # if self.task_name == 'anomaly_detection_custom' :
-        #     dec_out = self.anomaly_detction_custom(x_enc, x_mark_enc)
+        #     dec_out = self.anomaly_detection_custom(x_enc, x_mark_enc)
         if self.task_name == 'classification':
             dec_out = self.classification(x_enc, x_mark_enc)
             return dec_out  # [B, N]

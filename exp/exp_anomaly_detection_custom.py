@@ -13,6 +13,7 @@ import os
 import time
 import warnings
 import numpy as np
+import pickle
 
 warnings.filterwarnings('ignore')
 
@@ -176,6 +177,12 @@ class Exp_Anomaly_Detection_custom(Exp_Basic):
         combined_energy = np.concatenate([train_energy, test_energy], axis=0)
         threshold = np.percentile(combined_energy, 100 - self.args.anomaly_ratio)
         print("Threshold :", threshold)
+
+        with open (os.path.join(folder_path, 'threshold.txt'), 'w') as f:
+            f.write(str(threshold))
+
+        with open(os.path.join(folder_path, 'args.pkl'), 'wb') as f:
+            pickle.dump(self.args, f)
 
         # # (3) evaluation on the test set
         # pred = (test_energy > threshold).astype(int)
