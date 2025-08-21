@@ -11,12 +11,12 @@ python -u run.py \
   --freq d \
   --seq_len 100 \
   --pred_len 0 \
-  --d_model 64 \
-  --d_ff 64 \
-  --e_layers 2 \
+  --d_model 16 \
+  --d_ff 16  \
+  --e_layers 3 \
   --enc_in 1 \
   --c_out 1 \
-  --top_k 3 \
-  --anomaly_ratio 1 \
+  --top_k 4 \
+  --anomaly_ratio 10 \
   --batch_size 128 \
-  --train_epochs 3
+  --train_epochs 100

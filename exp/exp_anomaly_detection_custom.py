@@ -1,3 +1,4 @@
+import json
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from utils.tools import EarlyStopping, adjust_learning_rate, adjustment
@@ -14,6 +15,7 @@ import time
 import warnings
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 
 warnings.filterwarnings('ignore')
 
@@ -78,6 +80,12 @@ class Exp_Anomaly_Detection_custom(Exp_Basic):
 
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
+        history = {
+            "train": [],
+            "val": [],
+            "test": []
+        }
+
 
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
@@ -120,6 +128,10 @@ class Exp_Anomaly_Detection_custom(Exp_Basic):
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss, test_loss))
             early_stopping(vali_loss, self.model, path)
+            history["train"].append(train_loss)
+            history["val"].append(vali_loss)
+            history["test"].append(test_loss)
+
             if early_stopping.early_stop:
                 print("Early stopping")
                 break
@@ -127,6 +139,20 @@ class Exp_Anomaly_Detection_custom(Exp_Basic):
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
+
+
+        with open(path + '/settings.txt', 'w') as f:
+            f.write(setting)
+
+        folder_path = './test_results/' + setting + '/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        with open(os.path.join(folder_path, "loss_history.json"), "w") as f:
+            json.dump(history, f)
+
+        with open('./test_results/' + setting + '/loss.txt', 'w') as f:
+            f.write("Train Loss: {0:.7f} Vali Loss: {1:.7f} Test Loss: {2:.7f}".format(train_loss, vali_loss, test_loss))    
 
         return self.model
 
@@ -183,36 +209,23 @@ class Exp_Anomaly_Detection_custom(Exp_Basic):
 
         with open(os.path.join(folder_path, 'args.pkl'), 'wb') as f:
             pickle.dump(self.args, f)
-
-        # # (3) evaluation on the test set
-        # pred = (test_energy > threshold).astype(int)
-        # test_labels = np.concatenate(test_labels, axis=0).reshape(-1)
-        # test_labels = np.array(test_labels)
-        # gt = test_labels.astype(int)
-
-        # print("pred:   ", pred.shape)
-        # print("gt:     ", gt.shape)
-
-        # # (4) detection adjustment
-        # gt, pred = adjustment(gt, pred)
-
-        # pred = np.array(pred)
-        # gt = np.array(gt)
-        # print("pred: ", pred.shape)
-        # print("gt:   ", gt.shape)
-
-        # accuracy = accuracy_score(gt, pred)
-        # precision, recall, f_score, support = precision_recall_fscore_support(gt, pred, average='binary')
-        # print("Accuracy : {:0.4f}, Precision : {:0.4f}, Recall : {:0.4f}, F-score : {:0.4f} ".format(
-        #     accuracy, precision,
-        #     recall, f_score))
-
-        # f = open("result_anomaly_detection.txt", 'a')
-        # f.write(setting + "  \n")
-        # f.write("Accuracy : {:0.4f}, Precision : {:0.4f}, Recall : {:0.4f}, F-score : {:0.4f} ".format(
-        #     accuracy, precision,
-        #     recall, f_score))
-        # f.write('\n')
-        # f.write('\n')
-        # f.close()
         return
+    
+    def plot_loss_curves(self, setting):
+        path = './test_results/' + setting + '/'
+        with open(os.path.join(path, "loss_history.json"), "r") as f:
+            history = json.load(f)
+
+        plt.figure(figsize=(8,5))
+        plt.plot(history["train"], label="Train Loss", color="blue")
+        plt.plot(history["val"], label="Validation Loss", color="orange")
+        plt.plot(history["test"], label="Test Loss", color="green")
+        
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.title("Loss Curves")
+        plt.legend()
+        plt.grid(True, linestyle="--", alpha=0.6)
+        plt.tight_layout()
+        plt.savefig(os.path.join(path, "loss_curve.png"), dpi=300)
+        plt.close()
