@@ -206,7 +206,9 @@ if __name__ == '__main__':
 
             print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
             exp.test(setting)
-            exp.plot_loss_curves(setting)
+            if args.task_name == 'anomaly_detection_custom':            
+                exp.plot_loss_curves(setting)
+                
             if args.gpu_type == 'mps':
                 torch.backends.mps.empty_cache()
             elif args.gpu_type == 'cuda':

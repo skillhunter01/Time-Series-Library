@@ -1,5 +1,5 @@
 from data_provider.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, Dataset_M4, PSMSegLoader, \
-    MSLSegLoader, SMAPSegLoader, SMDSegLoader, SWATSegLoader, UEAloader
+    MSLSegLoader, SMAPSegLoader, SMDSegLoader, SWATSegLoader, UEAloader, ANAMSegloader, ANAMUniloader, ANAM_era5_loader
 from data_provider.uea import collate_fn
 from torch.utils.data import DataLoader
 
@@ -15,7 +15,10 @@ data_dict = {
     'SMAP': SMAPSegLoader,
     'SMD': SMDSegLoader,
     'SWAT': SWATSegLoader,
-    'UEA': UEAloader
+    'UEA': UEAloader,
+    'anamS' : ANAMSegloader,
+    'anamU' : ANAMUniloader,
+    'anamEra5' : ANAM_era5_loader 
 }
 
 
@@ -44,6 +47,7 @@ def data_provider(args, flag):
             num_workers=args.num_workers,
             drop_last=drop_last)
         return data_set, data_loader
+    
     elif args.task_name == 'anomaly_detection_custom':
         drop_last = False
         data_set = Data(
@@ -51,6 +55,7 @@ def data_provider(args, flag):
             root_path=args.root_path,
             data_path=args.data_path,
             features=args.features,
+            # win_size = args.seq_len,
             target=args.target,
             size = (args.seq_len, args.label_len, args.pred_len),
             flag=flag
